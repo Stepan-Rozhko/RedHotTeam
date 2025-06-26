@@ -1,0 +1,415 @@
+{{ "swiper.min.css" | asset_url | stylesheet_tag }}
+<script src="{{ 'swiper.min.js' | asset_url }}" defer="defer"></script>
+
+<div class="product">
+  <div class="product-gallery">
+    <div class="swiper product-swiper product-gallery_swiper">
+      <div class="swiper-wrapper product-gallery_swiper-wrapper">
+        {% for media in product.media %}
+          {% if media.media_type == 'image' %}
+            <div
+              class="swiper-slide product-gallery_swiper-slide"
+              data-color="{{ media.alt | downcase | strip }}"
+            >
+              {{ media | image_url: width: 800 | image_tag }}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <div class="swiper-pagination product-gallery_swiper-pagination"></div>
+      <div class="swiper-button-prev product-gallery_swiper-button-prev"></div>
+      <div class="swiper-button-next product-gallery_swiper-button-next"></div>
+    </div>
+  </div>
+
+  <div class="product-info">
+    <h1 class="product-info_title">{{ product.title | escape }}</h1>
+
+    <p class="product-info_price">
+      {% if product.selected_or_first_available_variant.compare_at_price > product.selected_or_first_available_variant.price %}
+        <span class="price price--sale">
+          <span class="price--compare">
+            {{ product.selected_or_first_available_variant.compare_at_price | money_with_currency }}
+          </span>
+          <span class="price--current">
+            {{ product.selected_or_first_available_variant.price | money_with_currency }}
+          </span>
+        </span>
+      {% else %}
+        <span class="price">
+          {{ product.selected_or_first_available_variant.price | money_with_currency }}
+        </span>
+      {% endif %}
+    </p>
+
+    <form method="post" action="/cart/add" id="product-form-{{ section.id }}" class="product-form">
+      <input type="hidden" name="id" value="{{ product.variants.first.id }}">
+
+      {% assign color_option_index = -1 %}
+      {% assign size_option_index = -1 %}
+      {% for option in product.options_with_values %}
+        {% if option.name == 'Color' %}{% assign color_option_index = forloop.index0 %}{% endif %}
+        {% if option.name == 'Size' %}{% assign size_option_index = forloop.index0 %}{% endif %}
+      {% endfor %}
+
+      {% if color_option_index != -1 %}
+        <div class="product-form_swatch-group color-swatch">
+          <div>
+            {% assign color_values = product.options_with_values[color_option_index].values %}
+            {% for value in color_values %}
+              <input
+                type="radio"
+                name="option{{ color_option_index | plus: 1 }}"
+                value="{{ value }}"
+                id="color-{{ value | handle }}"
+                data-option="Color"
+                class="color"
+                {% if forloop.first %}checked{% endif %}
+              >
+              <label for="color-{{ value | handle }}">
+                <span class="product-swatch-color">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="28px" height="28px" viewBox="0 0 16 16" fill="none">
+                    <path d="M1.24264 8.24264L8 15L14.7574 8.24264C15.553 7.44699 16 6.36786 16 5.24264V5.05234C16 2.8143 14.1857 1 11.9477 1C10.7166 1 9.55233 1.55959 8.78331 2.52086L8 3.5L7.21669 2.52086C6.44767 1.55959 5.28338 1 4.05234 1C1.8143 1 0 2.8143 0 5.05234V5.24264C0 6.36786 0.44699 7.44699 1.24264 8.24264Z" 
+                      fill="{{ value }}"/>
+                  </svg>
+                </span>
+              </label>
+            {% endfor %}
+          </div>
+          <div>
+            <h4>Color:</h4>
+            <span class="current-color-name">{{ color_values.first }}</span>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if size_option_index != -1 %}
+        <div class="product-form_swatch-group size-swatch">
+          <h4>Size:</h4>
+          {% assign size_values = product.options_with_values[size_option_index].values %}
+          {% for value in size_values %}
+            <input
+              type="radio"
+              name="option{{ size_option_index | plus: 1 }}"
+              value="{{ value }}"
+              id="size-{{ value | handle }}"
+              {% if forloop.first %}checked{% endif %}
+            >
+            <label for="size-{{ value | handle }}">{{ value }}</label>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <button type="submit">Add to Cart</button>
+    </form>
+
+    <div class="product-info_description">
+      {%- if product.description != blank -%}
+        {{ product.description }}
+      {%- endif -%}
+    </div>
+
+    <div class="product-info_tabs">
+      {% assign title_keys = "size_title,model_s_title,details_title" | split: "," %}
+      {% assign description_keys = "size_description,model_s_description,details_description" | split: "," %}
+
+      {% for i in (0..2) %}
+        {% assign title = product.metafields.custom[title_keys[i]] %}
+        {% assign description = product.metafields.custom[description_keys[i]] %}
+        {% if title.value != blank and description.value != blank %}
+          <div class="accordion accordion-metafield">
+            <div class="heading">{{ title.value }}</div>
+            <div class="content">{{ description.value }}</div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<script>
+    window.productVariants = {{ product.variants | json }};
+    window.productPrices = {
+      {% for variant in product.variants %}
+        "{{ variant.id }}": {
+          "price": "{{ variant.price | money_with_currency }}",
+          "compare_at_price": "{{ variant.compare_at_price | money_with_currency }}"
+        }{% unless forloop.last %},{% endunless %}
+      {% endfor %}
+    };
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    function getDeviceType() {
+      const width = window.innerWidth;
+      if (width > 1024) return 'pc';
+      if (width > 768) return 'tablet';
+      return 'mobile';
+    }
+
+    let currentDeviceType = getDeviceType();
+
+    function onResizeBreakpointChange() {
+      const newDeviceType = getDeviceType();
+      if (newDeviceType !== currentDeviceType) {
+        currentDeviceType = newDeviceType;
+
+        initSwiper(newDeviceType)
+      }
+    }
+    window.addEventListener('resize', onResizeBreakpointChange);
+
+    // Swiper Start
+    let device = currentDeviceType;
+    let swiperInstance;
+    const swiperContainer = document.querySelector('.product-swiper');
+    const swiperWrapper = swiperContainer.querySelector('.swiper-wrapper');
+    const originalSlides = Array.from(swiperWrapper.querySelectorAll('.swiper-slide'));
+
+    function initSwiper(newDeviceType) {
+      const activeDevice = newDeviceType || device;
+      swiperInstance = new Swiper('.product-swiper', {
+        loop: true,
+        slidesPerView: {
+          pc: {{ section.settings.slides_pc }},
+          tablet: {{ section.settings.slides_tablet }},
+          mobile: {{ section.settings.slides_mobile }}
+        }[activeDevice],
+        spaceBetween: {
+          pc: {{ section.settings.space_pc }},
+          tablet: {{ section.settings.space_tablet }},
+          mobile: {{ section.settings.space_mobile }}
+        }[activeDevice],
+        pagination: {
+          pc: {{ section.settings.pagination_pc }},
+          tablet: {{ section.settings.pagination_tablet }},
+          mobile: {{ section.settings.pagination_mobile }}
+        }[activeDevice] ? {
+          el: '.swiper-pagination',
+          clickable: true
+        } : false,
+        navigation: {
+          pc: {{ section.settings.navigation_pc }},
+          tablet: {{ section.settings.navigation_tablet }},
+          mobile: {{ section.settings.navigation_mobile }}
+        }[activeDevice] ? {
+          nextEl: '.swiper-button-next',
+          prevEl: '.swiper-button-prev'
+        } : false,
+      });
+    }
+
+    function rebuildSlides(selectedColor) {
+      if (swiperInstance) swiperInstance.destroy(true, true);
+      swiperWrapper.innerHTML = '';
+
+      originalSlides.forEach((slide) => {
+        const slideColor = slide.dataset.color?.toLowerCase().trim();
+        if (slideColor === selectedColor) {
+          swiperWrapper.appendChild(slide.cloneNode(true));
+        }
+      });
+
+      initSwiper();
+    }
+    // Swiper End
+
+    // Update Price
+    function updatePrice() {
+      const selectedOptions = [];
+      document.querySelectorAll('input[name^="option"]:checked').forEach(input => {
+        selectedOptions.push(input.value);
+      });
+
+      const variant = window.productVariants.find(v => 
+        v.options.every((opt, i) => opt === selectedOptions[i])
+      );
+
+      if (!variant) return;
+
+      const priceContainer = document.querySelector('.product-info_price');
+      if (!priceContainer) return;
+
+      const prices = window.productPrices[variant.id];
+
+      if (prices.compare_at_price && prices.compare_at_price > prices.price) {
+        priceContainer.innerHTML = `
+          <span class="price price--sale">
+            <span class="price--compare">${prices.compare_at_price}</span>
+            <span class="price--current">${prices.price}</span>
+          </span>
+        `;
+      } else {
+        priceContainer.innerHTML = `<span class="price">${prices.price}</span>`;
+      }
+    }
+    // Update Price End
+
+    // Change Swatch
+    document.body.addEventListener('change', (e) => {
+      const radioColor = e.target.closest('input[type="radio"][data-option="Color"]');
+      if (radioColor) {
+        const selectedColor = radioColor.value.trim();
+        rebuildSlides(selectedColor.toLowerCase());
+
+        const colorNameSpan = document.querySelector('.current-color-name');
+        if (colorNameSpan) {
+          colorNameSpan.textContent = selectedColor;
+        }
+      }
+
+      if (e.target.matches('input[name^="option"]')) {
+        updatePrice();
+      }
+    });
+
+    const checkedColor = document.querySelector('input[type="radio"][data-option="Color"]:checked');
+    if (checkedColor) {
+      const selectedColor = checkedColor.value.trim();
+      rebuildSlides(selectedColor.toLowerCase());
+
+      const colorNameSpan = document.querySelector('.current-color-name');
+      if (colorNameSpan) {
+        colorNameSpan.textContent = selectedColor;
+      }
+    } else {
+      initSwiper();
+    }
+
+    updatePrice();
+    // Change Swatch End
+
+    // Аккордеони
+    const allowMultipleOpen = {{ section.settings.show_accordions }};
+    const accordions = document.querySelectorAll(".accordion");
+    accordions.forEach((accordion) => {
+      const heading = accordion.querySelector(".heading");
+      heading.addEventListener("click", () => {
+        const isActive = accordion.classList.contains("active");
+        if (!allowMultipleOpen) accordions.forEach(acc => acc.classList.remove("active"));
+        accordion.classList.toggle("active", !isActive);
+      });
+    });
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Product",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Accordions"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_accordions",
+      "label": "Opening many accordions",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "Swiper Settings PC"
+    },
+    {
+      "type": "range",
+      "id": "slides_pc",
+      "label": "Slides on PC",
+      "min": 1,
+      "max": 5,
+      "default": 2
+    },
+    {
+      "type": "range",
+      "id": "space_pc",
+      "label": "Indent between slides (PC)",
+      "min": 0,
+      "max": 50,
+      "default": 10
+    },
+    {
+      "type": "checkbox",
+      "id": "pagination_pc",
+      "label": "Show pagination on PC",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "navigation_pc",
+      "label": "Show arrows on PC",
+      "default": true
+    },
+
+    {
+      "type": "header",
+      "content": "Swiper Settings Tablet"
+    },
+    {
+      "type": "range",
+      "id": "slides_tablet",
+      "label": "Slides on a tablet",
+      "min": 1,
+      "max": 4,
+      "default": 2
+    },
+    {
+      "type": "range",
+      "id": "space_tablet",
+      "label": "Indent between slides (tablet)",
+      "min": 0,
+      "max": 50,
+      "default": 10
+    },
+    {
+      "type": "checkbox",
+      "id": "pagination_tablet",
+      "label": "Show pagination on tablet",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "navigation_tablet",
+      "label": "Show arrows on tablet",
+      "default": true
+    },
+
+    {
+      "type": "header",
+      "content": "Swiper Settings Mobile"
+    },
+    {
+      "type": "range",
+      "id": "slides_mobile",
+      "label": "Slides on mobile",
+      "min": 1,
+      "max": 3,
+      "default": 1
+    },
+    {
+      "type": "range",
+      "id": "space_mobile",
+      "label": "Indent between slides (mobile)",
+      "min": 0,
+      "max": 50,
+      "default": 8
+    },
+    {
+      "type": "checkbox",
+      "id": "pagination_mobile",
+      "label": "Show pagination on mobile",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "navigation_mobile",
+      "label": "Show arrows on mobile",
+      "default": true
+    }
+  ]
+}
+{% endschema %}
+
+

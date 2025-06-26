@@ -1,0 +1,306 @@
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top_mobile }}px;
+    padding-bottom: {{ section.settings.padding_bottom_mobile }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top }}px;
+    padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+{%- endstyle -%}
+
+
+<div data-section-type="collection-wheel" data-section-id="section-{{ section.id }}" class="collection-wheel js-collection-wheel-{{ section.id }} section-{{ section.id }}-padding">
+ {% if collection.handle == 'automotive-rims-wheels' %}
+  {% assign raw_diameters = '' %}
+  {% assign raw_widths = '' %}
+  {% paginate collection.products by 1000 %}
+  {% for product in collection.products %}
+    {% if product.metafields.custom.diameter != blank %}
+      {% assign diam_list = product.metafields.custom.diameter | split: ',' %}
+      {% for d in diam_list %}
+        {% assign d_trimmed = d | strip %}
+        {% assign raw_diameters = raw_diameters | append: d_trimmed | append: ',' %}
+      {% endfor %}
+    {% endif %}
+
+    {% if product.metafields.custom.width != blank %}
+      {% assign width_list = product.metafields.custom.width | split: ',' %}
+      {% for w in width_list %}
+        {% assign w_trimmed = w | strip %}
+        {% assign raw_widths = raw_widths | append: w_trimmed | append: ',' %}
+      {% endfor %}
+    {% endif %}
+  {% endfor %}
+{% endpaginate %}
+
+  {% assign diameters = raw_diameters | split: ',' | uniq | sort %}
+  {% assign widths = raw_widths | split: ',' | uniq | sort %}
+  <div class="collection-wheel__filter">
+      <select class="collection-wheel__select" id="filter-year" data-default="{{ 'filters.year' | t }}"></select>
+      <select class="collection-wheel__select" id="filter-make" data-default="{{ 'filters.make' | t }}"></select>
+      <select class="collection-wheel__select" id="filter-model" data-default="{{ 'filters.model' | t }}"></select>
+
+      <select class="collection-wheel__select" id="filter-diameter">
+        <option value="">{{ 'filters.diameter' | t }}</option>
+        {% for d in diameters %}
+          {% if d != blank %}
+            <option value="{{ d }}">{{ d }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+
+      <select class="collection-wheel__select" id="filter-width">
+        <option value="">{{ 'filters.width' | t }}</option>
+        {% for w in widths %}
+          {% if w != blank %}
+            <option value="{{ w }}">{{ w }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+  </div>
+{% endif %}
+
+  <div class="collection-wheel__list">
+    {% paginate collection.products by 1000 %}
+      {%- for product in collection.products -%}
+        {% assign diameter = '' %}
+        {% assign width = '' %}
+        {% assign make = '' %}
+        {% assign model = '' %}
+        {% assign year = '' %}
+
+        {% if product.metafields.custom.diameter != blank %}
+          {% assign diameter = product.metafields.custom.diameter | strip %}
+        {% endif %}
+
+        {% if product.metafields.custom.width != blank %}
+          {% assign width = product.metafields.custom.width | strip %}
+        {% endif %}
+
+        {% assign has_compatibility = false %}
+        {% if product.metafields.custom.compatibility_disk != blank %}
+          {% assign compatibility_data_item = product.metafields.custom.compatibility_disk.value | default: '' %}
+          {% assign compatibility_data = compatibility_data_item | parse_json %}
+          {% assign has_compatibility = true %}
+          
+          {% if compatibility_data != blank %}
+            {% assign make = compatibility_data.car_make | strip %}
+            {% assign model = compatibility_data.car_model | strip %}
+            {% assign year = compatibility_data.car_year | strip %}
+          {% endif %}
+        {% endif %}
+
+          <div class="product-grid-item" data-product-id="{{ product.id }}" data-n="{{ forloop.index }}"
+            {% if has_compatibility %}
+              data-make="{{ make }}"
+              data-model="{{ model }}"
+              data-year="{{ year }}"
+            {% endif %}
+            data-diameter="{{ diameter }}" data-width="{{ width }}">
+            {%- if product.featured_media != blank -%}
+              <a href="{{ product.url }}" class="full-unstyled-link">
+                <picture class="product-grid-item__picture">
+                  <source srcset="{{ product.featured_media | image_url: width: 340 }}" media="(max-width: 769px)">
+                  <source srcset="{{ product.featured_media | image_url: width: 420 }}">
+                  <img src="{{ product.featured_media | image_url: width: 420 }}" alt="{{ product.featured_media.alt | escape }}" class="product-grid-item__img" loading="lazy">
+                </picture>
+              </a>
+            {% endif %}
+            
+            <div class="product-grid-item__body">
+              {{ compatibility_data }}
+              <h3 class="product-grid-item__heading">
+                <a href="{{ product.url }}" class="full-unstyled-link">
+                  {{ product.title | escape }}
+                </a>
+              </h3>
+              <div class="product-grid-item__price">
+                {{ product.price | money }}
+              </div>
+              <div class="product-grid-item__compatibility" style="display: none;">
+                ✅ {{ 'filters.compatibility_confirmed' | t }}
+              </div>
+            </div>
+          </div>
+      {%- endfor -%}
+      {%- if paginate.pages > 1 -%}
+        <div class="pagination">
+          {% if paginate.previous %}
+            <a href="{{ paginate.previous.url }}" class="pagination__prev">←</a>
+          {% endif %}
+
+          {% for part in paginate.parts %}
+            {% if part.is_link %}
+              <a href="{{ part.url }}" class="pagination__link">{{ part.title }}</a>
+            {% else %}
+              <span class="pagination__current">{{ part.title }}</span>
+            {% endif %}
+          {% endfor %}
+
+          {% if paginate.next %}
+            <a href="{{ paginate.next.url }}" class="pagination__next">→</a>
+          {% endif %}
+        </div>
+      {%- endif -%}
+    {% endpaginate %}
+    </div>
+</div>
+  <script>
+document.addEventListener('DOMContentLoaded', () => {
+    const makeSet = new Set();
+    const modelSet = new Set();
+    const yearSet = new Set();
+
+    document.querySelectorAll('.product-grid-item').forEach(item => {
+        const make = item.getAttribute('data-make');
+        const model = item.getAttribute('data-model');
+        const year = item.getAttribute('data-year');
+        if (make) makeSet.add(make);
+        if (model) modelSet.add(model);
+        if (year) yearSet.add(year);
+    });
+
+    updateSelectOptions('#filter-make', Array.from(makeSet));
+    updateSelectOptions('#filter-model', Array.from(modelSet));
+    updateSelectOptions('#filter-year', Array.from(yearSet));
+
+    const filters = ['year', 'make', 'model', 'diameter', 'width'];
+
+    filters.forEach(f => {
+        const val = localStorage.getItem(`wheel-filter-${f}`);
+        if (val) {
+            document.getElementById(`filter-${f}`).value = val;
+        }
+    });
+
+    const applyFilter = () => {
+        const year = document.getElementById('filter-year').value;
+        const make = document.getElementById('filter-make').value;
+        const model = document.getElementById('filter-model').value;
+        const diameter = document.getElementById('filter-diameter').value;
+        const width = document.getElementById('filter-width').value;
+
+        filters.forEach(f => {
+            const val = document.getElementById(`filter-${f}`).value;
+            localStorage.setItem(`wheel-filter-${f}`, val);
+        });
+
+        document.querySelectorAll('.product-grid-item').forEach(card => {
+            // Перевірка на відповідність кожного фільтра
+            const matchesYear = !year || card.dataset.year === year;
+            const matchesMake = !make || card.dataset.make === make;
+            const matchesModel = !model || card.dataset.model === model; // Виправлено: використовуємо model, а не width
+            const matchesDiameter = !diameter || card.dataset.diameter === diameter;
+            const matchesWidth = !width || card.dataset.width === width;
+
+            // Якщо усі умови виконуються, показуємо товар
+            if (
+                (year === "" || matchesYear) &&
+                (make === "" || matchesMake) &&
+                (model === "" || matchesModel) &&
+                (diameter === "" || matchesDiameter) &&
+                (width === "" || matchesWidth)
+            ) {
+                card.style.display = 'block';
+                const compatBlock = card.querySelector('.product-grid-item__compatibility');
+                if (compatBlock) compatBlock.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    };
+
+    filters.forEach(f =>
+        document.getElementById(`filter-${f}`).addEventListener('change', applyFilter)
+    );
+    
+    applyFilter();
+});
+
+function updateSelectOptions(selectId, values) {
+    const selectElement = document.querySelector(selectId);
+    selectElement.innerHTML = `<option value="">${selectElement.dataset.default}</option>`;
+    
+    values.sort().forEach(value => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        selectElement.appendChild(option);
+    });
+}
+</script>
+{% schema %}
+  {
+    "name": "Collection: wheel",
+    "tag": "section",
+    "class": "section",
+    "disabled_on": {
+      "groups": ["header", "footer"]
+    },
+    "settings": [
+      {
+        "type": "range",
+        "id": "products_per_page",
+        "label": "Products per page",
+        "min": 2,
+        "max": 50,
+        "step": 1,
+        "default": 50
+      },
+      {
+        "type": "header",
+        "content": "Section padding"
+      },
+      {
+        "type": "range",
+        "id": "padding_top_mobile",
+        "min": 0,
+        "max": 100,
+        "step": 5,
+        "unit": "px",
+        "label": "Mobile padding top",
+        "default": 30
+      },
+      {
+        "type": "range",
+        "id": "padding_bottom_mobile",
+        "min": 0,
+        "max": 100,
+        "step": 5,
+        "unit": "px",
+        "label": "Mobile padding bottom",
+        "default": 30
+      },
+      {
+        "type": "range",
+        "id": "padding_top",
+        "min": 0,
+        "max": 150,
+        "step": 5,
+        "unit": "px",
+        "label": "Desktop padding top",
+        "default": 40
+      },
+      {
+        "type": "range",
+        "id": "padding_bottom",
+        "min": 0,
+        "max": 150,
+        "step": 5,
+        "unit": "px",
+        "label": "Desktop padding bottom",
+        "default": 30
+      }
+    ],
+    "presets": [
+      {
+        "name": "Collection: wheel"
+      }
+    ]
+  }
+{% endschema %}
+

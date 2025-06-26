@@ -1,0 +1,123 @@
+main {
+  padding-bottom: 60px;
+}
+
+.product {
+  padding: 0 7px;
+}
+.product .product-gallery_swiper-slide img {
+  width: 100%;
+  height: auto;
+}
+.product .product-gallery .swiper.product-swiper img {
+  width: 100%;
+  height: auto;
+}
+.product .product-gallery .swiper-button-prev[role=button],
+.product .product-gallery .swiper-button-next[role=button] {
+  display: block;
+}
+.product .product-gallery .hidden-slide {
+  display: none !important;
+}
+.product-form h4 {
+  margin: 0 10px 0 0;
+  width: fit-content;
+}
+.product-form .size-swatch {
+  display: flex;
+}
+.product-form button {
+  background-color: rgb(5, 74, 134);
+  color: white;
+  border: 1px solid rgb(5, 74, 134);
+  border-radius: 10px;
+  width: 100%;
+  padding: 13px;
+  font-size: 16px;
+  margin-top: 20px;
+}
+.product-form button::after, .product-form button::before {
+  display: none;
+}
+.product-form input {
+  display: none;
+}
+.product-form input.color:checked + label {
+  border-radius: 23%;
+  outline: 1px solid darkblue;
+  outline-offset: 4px;
+}
+.product-form label {
+  display: block;
+  width: fit-content;
+  margin-right: 25px;
+}
+.product-form label > span {
+  display: block;
+  height: 28px;
+}
+.product-form_swatch-group > div {
+  display: flex;
+  margin-bottom: 30px;
+}
+.product-info_tabs {
+  margin-top: 40px;
+}
+.product-info_tabs .accordion-metafield {
+  border-bottom: 1px solid darkgray;
+  padding: 11px 0;
+}
+.product-info_tabs .accordion-metafield .heading {
+  font-size: 20px;
+  color: #085c5f;
+  cursor: pointer;
+  position: relative;
+}
+.product-info_tabs .accordion-metafield .heading::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-50%) rotate(45deg);
+  transition: transform 0.3s ease;
+}
+.product-info_tabs .accordion-metafield.active .heading::after {
+  transform: translateY(-50%) rotate(-135deg);
+}
+.product-info_tabs .accordion-metafield .content {
+  display: none;
+}
+.product-info_tabs .accordion-metafield.active .content {
+  margin-top: 15px;
+  display: block;
+}
+
+@media (max-width: 1024px) {
+  body.template-product .product-gallery_swiper-slide img {
+    width: 100%;
+  }
+}
+@media (min-width: 1025px) {
+  body.template-product main {
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+  body.template-product .product {
+    display: grid;
+    grid-template-columns: 70% 30%;
+  }
+  body.template-product .product-gallery {
+    padding-right: 60px;
+  }
+  body.template-product .product-gallery_swiper-slide img {
+    width: auto;
+  }
+  body.template-product .product-info {
+    min-width: 30%;
+  }
+}
