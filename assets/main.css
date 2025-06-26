@@ -5,6 +5,15 @@ main {
 .product {
   padding: 0 7px;
 }
+.product .product-gallery .swiper-button-prev,
+.product .product-gallery .swiper-button-next {
+  display: none;
+}
+.product .product-gallery .swiper-button-prev[role=button], .product .product-gallery .swiper-button-prev[role=button],
+.product .product-gallery .swiper-button-next[role=button],
+.product .product-gallery .swiper-button-next[role=button] {
+  display: block;
+}
 .product .product-gallery_swiper-slide img {
   width: 100%;
   height: auto;
@@ -12,10 +21,6 @@ main {
 .product .product-gallery .swiper.product-swiper img {
   width: 100%;
   height: auto;
-}
-.product .product-gallery .swiper-button-prev[role=button],
-.product .product-gallery .swiper-button-next[role=button] {
-  display: block;
 }
 .product .product-gallery .hidden-slide {
   display: none !important;
@@ -36,6 +41,11 @@ main {
   padding: 13px;
   font-size: 16px;
   margin-top: 20px;
+  cursor: pointer;
+}
+.product-form button:hover {
+  background-color: rgb(3, 110, 202);
+  border-color: rgb(3, 110, 202);
 }
 .product-form button::after, .product-form button::before {
   display: none;
@@ -56,6 +66,7 @@ main {
 .product-form label > span {
   display: block;
   height: 28px;
+  cursor: pointer;
 }
 .product-form_swatch-group > div {
   display: flex;

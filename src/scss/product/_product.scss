@@ -6,6 +6,17 @@ main {
     padding: 0 7px;
 
     .product-gallery {
+        .swiper-button-prev,
+        .swiper-button-next {
+            display: none;
+            
+            &[role="button"],
+            &[role="button"] {
+                display: block;
+            }
+        }
+
+
         &_swiper-slide img {
             width: 100%;
             height: auto;
@@ -16,11 +27,6 @@ main {
                 width: 100%;
                 height: auto;
             }
-        }
-
-        .swiper-button-prev[role="button"],
-        .swiper-button-next[role="button"] {
-            display: block;
         }
 
         .hidden-slide {
@@ -47,6 +53,12 @@ main {
             padding: 13px;
             font-size: 16px;
             margin-top: 20px;
+            cursor: pointer;
+
+            &:hover {
+                background-color: rgb(3 110 202);
+                border-color: rgb(3 110 202);
+            }
 
             &::after,
             &::before {
@@ -72,6 +84,7 @@ main {
             > span {
                 display: block;
                 height: 28px;
+                cursor: pointer;
             }
         }
 

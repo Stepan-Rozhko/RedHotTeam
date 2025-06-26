@@ -11,7 +11,21 @@
   "sections": {
     "main": {
       "type": "main-product",
-      "settings": {}
+      "settings": {
+        "show_accordions": true,
+        "slides_pc": 2,
+        "space_pc": 20,
+        "pagination_pc": false,
+        "navigation_pc": true,
+        "slides_tablet": 2,
+        "space_tablet": 10,
+        "pagination_tablet": false,
+        "navigation_tablet": false,
+        "slides_mobile": 1,
+        "space_mobile": 0,
+        "pagination_mobile": true,
+        "navigation_mobile": false
+      }
     }
   },
   "order": [

@@ -155,9 +155,31 @@
       if (newDeviceType !== currentDeviceType) {
         currentDeviceType = newDeviceType;
 
+        const buttonNext = document.querySelector('.swiper-button-prev.product-gallery_swiper-button-prev');
+        const buttonPrev = document.querySelector('.swiper-button-next.product-gallery_swiper-button-next');
+        const paginationEl = document.querySelector('.swiper-pagination.product-gallery_swiper-pagination');
+        paginationEl.className = 'swiper-pagination product-gallery_swiper-pagination';
+        
+        if (buttonPrev) {
+          while (buttonPrev.attributes.length > 0) {
+            buttonPrev.removeAttribute(buttonPrev.attributes[0].name);
+          }
+
+          buttonPrev.className = 'swiper-button-prev product-gallery_swiper-button-prev';
+        }
+
+        if (buttonNext) {
+          while (buttonNext.attributes.length > 0) {
+            buttonNext.removeAttribute(buttonNext.attributes[0].name);
+          }
+
+          buttonNext.className = 'swiper-button-next product-gallery_swiper-button-next';
+        }
+
         initSwiper(newDeviceType)
       }
     }
+    
     window.addEventListener('resize', onResizeBreakpointChange);
 
     // Swiper Start
@@ -170,7 +192,7 @@
     function initSwiper(newDeviceType) {
       const activeDevice = newDeviceType || device;
       swiperInstance = new Swiper('.product-swiper', {
-        loop: true,
+        loop: false,
         slidesPerView: {
           pc: {{ section.settings.slides_pc }},
           tablet: {{ section.settings.slides_tablet }},
